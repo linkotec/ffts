@@ -1,0 +1,48 @@
+
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+
+find_path(FFTW_INCLUDES fftw3.h PATHS ${fftwdir})
+find_library(FFTW_LIBRARIES NAMES fftw3f libfftw3f-3 PATHS ${fftwdir})
+if(FFTW_INCLUDES AND FFTW_LIBRARIES)
+    set(fftw 1)
+    message(STATUS "FFTW found: ${FFTW_INCLUDES}")
+    add_definitions(-DHAVE_FFTW)
+    include_directories(${FFTW_INCLUDES})
+    if(WIN32)
+        file(GLOB dlls ${fftwdir}/*.dll)
+        foreach(dll ${dlls})
+            if(CMAKE_CONFIGURATION_TYPES)
+                foreach(type ${CMAKE_CONFIGURATION_TYPES})
+                    file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/${type})
+                    configure_file(${dll} ${EXECUTABLE_OUTPUT_PATH}/${type} COPYONLY)
+                endforeach()
+            else()
+                configure_file(${dll} ${EXECUTABLE_OUTPUT_PATH}/${type} COPYONLY)
+            endif()
+        endforeach()
+    endif()
+else()
+    message("FFTW not found: FFTW_INCLUDES=${FFTW_INCLUDES}, FFTW_LIBRARIES=${FFTW_LIBRARIES} in '${fftwdir}', set fftwdir")
+endif()
+
+
+macro(test name file type)
+    add_executable(${name} ${file}${type} ${ARGN})
+    if(FFTW_LIBRARIES)
+        target_link_libraries(${name} ${FFTW_LIBRARIES})
+    endif()
+    if(UNIX)
+        target_link_libraries(${name} -lpthread -ldl)
+    endif()
+    target_link_libraries(${name} ffts_static  ${FFTS_EXTRA_LIBRARIES})
+endmacro()
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+file(GLOB headers ${CMAKE_SOURCE_DIR}/include/*.h)
+
+test(ffts_test test .c ${headers})
+
+if(fftw)
+    test(bench_fftwf bench_fftwf .c ${headers})
+endif()

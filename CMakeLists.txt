@@ -89,14 +89,14 @@ if(NOT CMAKE_CROSSCOMPILING)
       else()
         message("FFTS is using 'vfp' FPU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
-        
+
         set(ENABLE_NEON 0)
         set(ENABLE_VFP 1)
       endif(NOT SOFTFP_AVAILABLE)
     else()
       message("FFTS is using 'neon' FPU")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
-      
+
       set(ENABLE_NEON 1)
       set(ENABLE_VFP 0)
     endif(NOT NEON_AVAILABLE)
@@ -163,6 +163,9 @@ elseif(CMAKE_COMPILER_IS_GNUCC)
   if(HAVE_XMMINTRIN_H)
     add_definitions(-msse)
   endif(HAVE_XMMINTRIN_H)
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+
 endif(MSVC)
 
 include_directories(include)
@@ -251,7 +254,7 @@ elseif(HAVE_XMMINTRIN_H)
             set(ENABLE_RUNTIME_DYNAMIC_CODE ON)
           endif(CMAKE_ASM-ATT_COMPILER_WORKS)
         endif(NOT ENABLE_RUNTIME_DYNAMIC_CODE)
-      
+
         if(ENABLE_RUNTIME_DYNAMIC_CODE)
           add_definitions(-DSSE_DEFINE_CONSTANTS)
         endif(ENABLE_RUNTIME_DYNAMIC_CODE)
@@ -281,11 +284,4 @@ add_library(ffts_static
   ${FFTS_SOURCES}
 )
 
-add_executable(ffts_test
-  tests/test.c
-)
-
-target_link_libraries(ffts_test
-  ffts_static
-  ${FFTS_EXTRA_LIBRARIES}
-)
+add_subdirectory(tests)
